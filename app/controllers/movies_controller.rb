@@ -9,6 +9,24 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.all_ratings
 
+    if (params[:commit] == 'Refresh')
+      @all_ratings.each do |rating|
+        params[rating] = params[rating] || '0'
+      end
+    end
+    params.delete(:commit)
+
+    if ((@all_ratings.select { |r| params[r] == '1'}).length == 0)
+      @all_ratings.each do |rating|
+        params[rating] = session[:movies_index_params][rating]
+      end
+    end
+
+    (session[:movies_index_params] || []).each do |k, v|
+      params[k] = params[k] || v
+    end
+    session[:movies_index_params] = params
+
     order_by = params[:order_by] || 'none'
     if (['title', 'release_date'].include? order_by)
       order_by += ' ASC'
@@ -18,7 +36,7 @@ class MoviesController < ApplicationController
       (params[rating] == '1')
     }).map { |rating|
       "rating = '" + rating + "'"
-    }).join(' OR ')).order(order_by)
+    }).join(' OR '), params).order(order_by)
   end
 
   def new
