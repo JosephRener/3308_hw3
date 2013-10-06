@@ -7,14 +7,18 @@ class MoviesController < ApplicationController
   end
 
   def index
-    order_by = params[:order_by]
+    @all_ratings = Movie.all_ratings
+
+    order_by = params[:order_by] || 'none'
     if (['title', 'release_date'].include? order_by)
       order_by += ' ASC'
-    else
-      order_by = ''
     end
 
-    @movies = Movie.order(order_by)
+    @movies = Movie.where(((@all_ratings.select {|rating|
+      (params[rating] == '1')
+    }).map { |rating|
+      "rating = '" + rating + "'"
+    }).join(' OR ')).order(order_by)
   end
 
   def new
