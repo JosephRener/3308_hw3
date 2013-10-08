@@ -9,34 +9,35 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.all_ratings
 
-    if (params[:commit] == 'Refresh')
-      @all_ratings.each do |rating|
-        params[rating] = params[rating] || '0'
-      end
-    end
-    params.delete(:commit)
+    sparams = session[:movies_index_params] || Hash.new;
 
-    if ((@all_ratings.select { |r| params[r] == '1'}).length == 0)
-      @all_ratings.each do |rating|
-        params[rating] = session[:movies_index_params][rating]
-      end
-    end
+    # fix params if all boxes unchecked
+    (@all_ratings.select { |r| params[r] == '1' }).length == 0 &&
+      @all_ratings.each { |r| params[r] = (sparams[r] == '1' ? '1' : nil ) }
 
-    (session[:movies_index_params] || []).each do |k, v|
-      params[k] = params[k] || v
-    end
+    refresh = false
+    # set all missing params to their saved counterparts
+    sparams.each { |k, v|
+      !(@all_ratings.include? k) &&
+        (params[k] = params[k] || ((refresh = true) && v)) }
+
+    # set new params in session
     session[:movies_index_params] = params
 
-    order_by = params[:order_by] || 'none'
-    if (['title', 'release_date'].include? order_by)
-      order_by += ' ASC'
-    end
+    # set order_by variable
+    order_by = (['title', 'release_date'].include? params[:order_by]) ? params[:order_by] : 'none'
 
+    # filter and order the movies for display
     @movies = Movie.where(((@all_ratings.select {|rating|
-      (params[rating] == '1')
+      params[rating] == '1'
     }).map { |rating|
       "rating = '" + rating + "'"
-    }).join(' OR '), params).order(order_by)
+    }).join(' OR '), params).order(
+      (order_by != 'none') && (order_by + ' ASC'))
+
+    # refresh if params do not match url
+    refresh &&
+      (flash.keep && redirect_to(sort_movies_path(order_by, params)))
   end
 
   def new

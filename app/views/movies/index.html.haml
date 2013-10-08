@@ -5,7 +5,7 @@
   Include:
   - @all_ratings.each do |rating|
     = rating
-    = check_box_tag rating, '1', ((params[rating] || '1') == '1')
+    = check_box_tag rating, '1', (params[rating] == '1')
   = submit_tag 'Refresh'
 
 %table#movies
