@@ -9,7 +9,6 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.all_ratings
 
-    session.clear
     sparams = session[:movies_index_params] || Hash.new;
 
     # fix params if all boxes unchecked
