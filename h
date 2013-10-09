@@ -1,1 +1,1 @@
-heroku "$@" --app infinite-coast-7464
+heroku "$@" --app desolate-chamber-2280
